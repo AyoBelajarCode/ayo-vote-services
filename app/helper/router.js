@@ -14,6 +14,6 @@ router.use(function hitlog(request, response, next){
 router.post('/login', auth.checkAuth)
 
 router.use(checkSession)
-router.get('/room', room.getRoom)
+router.get('/room/:organizationId', room.getRoom)
 
 module.exports = router
