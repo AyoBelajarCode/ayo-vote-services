@@ -15,5 +15,6 @@ router.post('/login', auth.checkAuth)
 
 router.use(checkSession)
 router.get('/room/:organizationId', room.getRoom)
+router.post('/room', room.insertRoom)
 
 module.exports = router
