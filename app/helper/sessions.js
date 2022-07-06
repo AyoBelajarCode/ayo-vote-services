@@ -5,7 +5,7 @@ const { unix } = require('moment')
 
 async function checkSession(request, response, next){
     const { securitycode, timestamp } = request.headers
-    const sessionId = (request.method === 'GET') ? request.headers.session : request.body.sessionId
+    const sessionId = (request.method === 'GET' || request.method === 'DELETE') ? request.headers.session : request.body.sessionId
     const apiKey = process.env.API_KEY
 
     const serverHash = sha256Generator('encrypt', apiKey + sessionId + timestamp)

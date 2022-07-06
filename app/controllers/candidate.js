@@ -1,26 +1,24 @@
 const db = require('../helper/database')
 
-async function getRoom(request, response){
-    const { organizationId } = request.params
+async function getCandidate(request, response){
+    const { roomId } = request.params
 
     try{
-        const getRoomList = await db.query(`
+        const getCandidateList = await db.query(`
             SELECT id,
                 name,
-                description,
-                period_start as "periodStart",
-                period_end as "periodEnd",
-                created_date as "createdDate",
-                coalesce(created_by, 'SYSTEM') as "createdBy"
-                from vote_master_room
-                where organization__id = $1
-        `, [organizationId])
-    
-        if(getRoomList.rowCount > 0){
+                (select name from vote_master_position where id = position__id) as position,
+                vision,
+                array_to_json(mission) as mission
+                from vote_master_room_candidate
+                where room__id = $1
+        `, [roomId])
+
+        if(getCandidateList.rowCount > 0){
             response.status(200).json({
                 status: 'success',
                 message: 'success',
-                data: getRoomList.rows
+                data: getCandidateList.rows
             })
         }else{
             response.status(200).json({
@@ -36,28 +34,21 @@ async function getRoom(request, response){
             errorThrown: err.stack
         })
     }
-    
 }
 
-async function insertRoom(request, response){
-    const { id, organizationId, userId, name, dateStart, dateEnd, timeStart, timeEnd, description } = request.body
-
-    const periodStart = `${dateStart} ${timeStart}`
-    const periodEnd = `${dateEnd} ${timeEnd}`
+async function insertCandidate(request, response){
+    const { userId, id, roomId, name, positionId, vision, mission } = request.body
 
     try{
+        const newMission = mission.join(', ')
+        const arrayMission = `{${newMission}}`
+
         if(id === null){
-            const insert = await db.query(`INSERT INTO vote_master_room
-                (
-                    organization__id, name, period_start, period_end,
-                    description, status, created_by
-                )
-                values
-                (
-                    $1, $2, $3, $4,
-                    $5, $6, $7
-                ) returning id`, [organizationId, name, periodStart, periodEnd,
-                description, 'Active', userId])
+            const insert = await db.query(`
+                INSERT INTO vote_master_room_candidate(room__id, name, position__id, vision, mission, created_by)
+                values($1, $2, $3, $4, $5, $6) returning id
+            `, [roomId, name, positionId, vision, arrayMission, userId])
+
             if(insert){
                 response.status(200).json({
                     status: 'success',
@@ -74,8 +65,10 @@ async function insertRoom(request, response){
                     message: `Data with id ${id} not found`
                 })
             }else{
-                const insert = await db.query(`UPDATE vote_master_room set name = $1, period_start = $2, period_end = $3, description = $4, modified_by = $6 where id = $5`,
-                [name, periodStart, periodEnd, description, id, userId])
+                const insert = await db.query(`
+                    UPDATE vote_master_room_candidate set room__id = $1, name = $2, position__id = $3, vision = $4, mission = $5, modified_by = $7
+                    where id = $6
+                `, [roomId, name, positionId, vision, arrayMission, id, userId])
                 if(insert){
                     response.status(200).json({
                         status: 'success',
@@ -83,10 +76,10 @@ async function insertRoom(request, response){
                         dataId: parseInt(id)
                     })
                 }
-
             }
-
         }
+
+
     }catch(err){
         response.status(500).json({
             status: 'error',
@@ -96,7 +89,7 @@ async function insertRoom(request, response){
     }
 }
 
-async function deleteRoom(request, response){
+async function deleteCandidate(request, response){
     const { id } = request.params
 
     const check = await checkId(id)
@@ -108,7 +101,7 @@ async function deleteRoom(request, response){
         })
     }else{
         try{
-            deleteData = await db.query(`DELETE FROM vote_master_room where id = $1`, [id])
+            deleteData = await db.query(`DELETE FROM vote_master_room_candidate where id = $1`, [id])
 
             if(deleteData){
                 response.status(200).json({
@@ -127,7 +120,7 @@ async function deleteRoom(request, response){
 }
 
 async function checkId(id){
-    const checkId = await db.query(`select id FROM vote_master_room where id = $1`, [id])
+    const checkId = await db.query(`select id FROM vote_master_room_candidate where id = $1`, [id])
 
     if(checkId.rowCount === 0){
         return false
@@ -137,7 +130,7 @@ async function checkId(id){
 }
 
 module.exports = {
-    getRoom,
-    insertRoom,
-    deleteRoom
+    getCandidate,
+    insertCandidate,
+    deleteCandidate
 }

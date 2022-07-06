@@ -1,26 +1,25 @@
 const db = require('../helper/database')
+const { sha256Generator } = require('../helper/encryptor')
 
-async function getRoom(request, response){
-    const { organizationId } = request.params
+async function getParticipants(request, response){
+    const { roomId } = request.params
 
     try{
-        const getRoomList = await db.query(`
+        const getParticipantsList = await db.query(`
             SELECT id,
                 name,
-                description,
-                period_start as "periodStart",
-                period_end as "periodEnd",
-                created_date as "createdDate",
-                coalesce(created_by, 'SYSTEM') as "createdBy"
-                from vote_master_room
-                where organization__id = $1
-        `, [organizationId])
-    
-        if(getRoomList.rowCount > 0){
+                email,
+                token,
+                status
+                from vote_master_room_participants
+                where room__id = $1
+        `, [roomId])
+
+        if(getParticipantsList.rowCount > 0){
             response.status(200).json({
                 status: 'success',
                 message: 'success',
-                data: getRoomList.rows
+                data: getParticipantsList.rows
             })
         }else{
             response.status(200).json({
@@ -36,28 +35,20 @@ async function getRoom(request, response){
             errorThrown: err.stack
         })
     }
-    
 }
 
-async function insertRoom(request, response){
-    const { id, organizationId, userId, name, dateStart, dateEnd, timeStart, timeEnd, description } = request.body
+async function insertParticipants(request, response){
+    const { userId, id, roomId, name, email, status } = request.body
 
-    const periodStart = `${dateStart} ${timeStart}`
-    const periodEnd = `${dateEnd} ${timeEnd}`
-
-    try{
+    try{       
         if(id === null){
-            const insert = await db.query(`INSERT INTO vote_master_room
-                (
-                    organization__id, name, period_start, period_end,
-                    description, status, created_by
-                )
-                values
-                (
-                    $1, $2, $3, $4,
-                    $5, $6, $7
-                ) returning id`, [organizationId, name, periodStart, periodEnd,
-                description, 'Active', userId])
+            const secretKey = '4y0v0t3p4rt1c1p4nts'
+            const generateToken = sha256Generator('encrypt', roomId+email+secretKey)
+            const insert = await db.query(`
+                INSERT INTO vote_master_room_participants(room__id, name, email, token, status, created_by)
+                values($1, $2, $3, $4, $5, $6) returning id
+            `, [roomId, name, email, generateToken, 'Active', userId])
+
             if(insert){
                 response.status(200).json({
                     status: 'success',
@@ -74,8 +65,10 @@ async function insertRoom(request, response){
                     message: `Data with id ${id} not found`
                 })
             }else{
-                const insert = await db.query(`UPDATE vote_master_room set name = $1, period_start = $2, period_end = $3, description = $4, modified_by = $6 where id = $5`,
-                [name, periodStart, periodEnd, description, id, userId])
+                const insert = await db.query(`
+                    UPDATE vote_master_room_participants set room__id = $1, name = $2, email = $3, status = $4, modified_by = $5
+                    where id = $6
+                `, [roomId, name, email, status, userId, id])
                 if(insert){
                     response.status(200).json({
                         status: 'success',
@@ -83,10 +76,10 @@ async function insertRoom(request, response){
                         dataId: parseInt(id)
                     })
                 }
-
             }
-
         }
+
+
     }catch(err){
         response.status(500).json({
             status: 'error',
@@ -96,7 +89,7 @@ async function insertRoom(request, response){
     }
 }
 
-async function deleteRoom(request, response){
+async function deleteParticipants(request, response){
     const { id } = request.params
 
     const check = await checkId(id)
@@ -108,7 +101,7 @@ async function deleteRoom(request, response){
         })
     }else{
         try{
-            deleteData = await db.query(`DELETE FROM vote_master_room where id = $1`, [id])
+            deleteData = await db.query(`DELETE FROM vote_master_room_participants where id = $1`, [id])
 
             if(deleteData){
                 response.status(200).json({
@@ -127,7 +120,7 @@ async function deleteRoom(request, response){
 }
 
 async function checkId(id){
-    const checkId = await db.query(`select id FROM vote_master_room where id = $1`, [id])
+    const checkId = await db.query(`select id FROM vote_master_room_participants where id = $1`, [id])
 
     if(checkId.rowCount === 0){
         return false
@@ -137,7 +130,7 @@ async function checkId(id){
 }
 
 module.exports = {
-    getRoom,
-    insertRoom,
-    deleteRoom
+    getParticipants,
+    insertParticipants,
+    deleteParticipants
 }
