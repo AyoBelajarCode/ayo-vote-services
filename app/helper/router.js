@@ -4,6 +4,7 @@ const auth = require('../controllers/auth')
 const room = require('../controllers/room')
 const candidate = require('../controllers/candidate')
 const participants = require('../controllers/participants')
+const voting = require('../controllers/voting')
 
 const checkSession = require('./sessions')
 const router = express.Router()
@@ -31,5 +32,11 @@ router.get('/participants/:roomId', participants.getParticipants)
 router.post('/participants', participants.insertParticipants)
 router.put('/participants', participants.insertParticipants)
 router.delete('/participants/:id', participants.deleteParticipants)
+
+router.get('/voting/checktoken/:token', voting.checkToken)
+router.get('/voting/position/:roomId', voting.getPosition)
+router.get('/voting/:roomId/:positionId', voting.getCandidate)
+router.post('/voting', voting.saveVoting)
+
 
 module.exports = router

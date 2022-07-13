@@ -5,7 +5,7 @@ async function getCandidate(request, response){
 
     try{
         const getCandidateList = await db.query(`
-            SELECT id,
+            SELECT fn_convert_integer(id) as id,
                 name,
                 (select name from vote_master_position where id = position__id) as position,
                 vision,

@@ -6,7 +6,7 @@ async function getParticipants(request, response){
 
     try{
         const getParticipantsList = await db.query(`
-            SELECT id,
+            SELECT fn_convert_integer(id) as id,
                 name,
                 email,
                 token,

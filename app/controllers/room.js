@@ -5,7 +5,7 @@ async function getRoom(request, response){
 
     try{
         const getRoomList = await db.query(`
-            SELECT id,
+            SELECT fn_convert_integer(id) as id,
                 name,
                 description,
                 period_start as "periodStart",
