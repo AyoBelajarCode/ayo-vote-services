@@ -5,6 +5,7 @@ const room = require('../controllers/room')
 const candidate = require('../controllers/candidate')
 const participants = require('../controllers/participants')
 const voting = require('../controllers/voting')
+const option = require('../controllers/option')
 
 const checkSession = require('./sessions')
 const router = express.Router()
@@ -38,5 +39,6 @@ router.get('/voting/position/:roomId', voting.getPosition)
 router.get('/voting/:roomId/:positionId', voting.getCandidate)
 router.post('/voting', voting.saveVoting)
 
+router.post('/option', option.getCombo)
 
 module.exports = router

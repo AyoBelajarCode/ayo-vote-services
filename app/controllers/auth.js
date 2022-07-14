@@ -23,7 +23,7 @@ async function checkAuth(request, response){
                                             left join vote_system_language c on a.language__id = c.id
                                             where a.email = $1
                                             and password = $2
-                                            and is_active = 1`, [email, password])
+                                            and is_active = 1`, [email, encryptedPassword])
 
         if(checkUser.rowCount > 0){
             const dataUser = checkUser.rows[0]
