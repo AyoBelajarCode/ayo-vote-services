@@ -41,7 +41,7 @@ async function insertParticipants(request, response){
     const { userId, id, roomId, name, email, status } = request.body
 
     try{       
-        if(id === null){
+        if(id === null || id === ""){
             const secretKey = '4y0v0t3p4rt1c1p4nts'
             const generateToken = sha256Generator('encrypt', roomId+email+secretKey)
             const insert = await db.query(`

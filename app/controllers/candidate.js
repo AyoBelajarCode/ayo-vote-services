@@ -43,7 +43,7 @@ async function insertCandidate(request, response){
         const newMission = mission.join(', ')
         const arrayMission = `{${newMission}}`
 
-        if(id === null){
+        if(id === null || id === ""){
             const insert = await db.query(`
                 INSERT INTO vote_master_room_candidate(room__id, name, position__id, vision, mission, created_by)
                 values($1, $2, $3, $4, $5, $6) returning id

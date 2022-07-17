@@ -8,8 +8,8 @@ async function getRoom(request, response){
             SELECT fn_convert_integer(id) as id,
                 name,
                 description,
-                period_start as "periodStart",
-                period_end as "periodEnd",
+                to_char(period_start, 'yyyy-mm-dd HH24:mi') || ' - ' || to_char(period_end, 'yyyy-mm-dd HH24:mi') as period,
+                status,
                 created_date as "createdDate",
                 coalesce(created_by, 'SYSTEM') as "createdBy"
                 from vote_master_room
@@ -46,7 +46,7 @@ async function insertRoom(request, response){
     const periodEnd = `${dateEnd} ${timeEnd}`
 
     try{
-        if(id === null){
+        if(id === null || id === ""){
             const insert = await db.query(`INSERT INTO vote_master_room
                 (
                     organization__id, name, period_start, period_end,

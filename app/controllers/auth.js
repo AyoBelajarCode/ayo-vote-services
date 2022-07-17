@@ -16,6 +16,7 @@ async function checkAuth(request, response){
         const checkUser = await db.query(`select a.id,
                                             a.name,
                                             a.email,
+                                            b.id as "organizationId",
                                             b.name as "organizationName",
                                             c.name as language
                                             from vote_user_data a
@@ -30,6 +31,7 @@ async function checkAuth(request, response){
             const userData = {
                 id: dataUser.id,
                 name: dataUser.name,
+                organizationId: dataUser.organizationId,
                 organizationName: dataUser.organizationName,
                 language: dataUser.language
             }
