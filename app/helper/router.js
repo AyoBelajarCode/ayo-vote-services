@@ -20,6 +20,7 @@ router.post('/login', auth.checkAuth)
 router.use(checkSession)
 
 router.get('/room/:organizationId', room.getRoom)
+router.get('/roomDetail/:id', room.getRoomDetail)
 router.post('/room', room.insertRoom)
 router.put('/room', room.insertRoom)
 router.delete('/room/:id', room.deleteRoom)

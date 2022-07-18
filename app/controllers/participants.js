@@ -10,7 +10,8 @@ async function getParticipants(request, response){
                 name,
                 email,
                 token,
-                status
+                status,
+                status_vote as "voteStatus"
                 from vote_master_room_participants
                 where room__id = $1
         `, [roomId])
@@ -38,16 +39,16 @@ async function getParticipants(request, response){
 }
 
 async function insertParticipants(request, response){
-    const { userId, id, roomId, name, email, status } = request.body
+    const { userId, id, roomId, name, email, status, statusVote } = request.body
 
     try{       
         if(id === null || id === ""){
             const secretKey = '4y0v0t3p4rt1c1p4nts'
             const generateToken = sha256Generator('encrypt', roomId+email+secretKey)
             const insert = await db.query(`
-                INSERT INTO vote_master_room_participants(room__id, name, email, token, status, created_by)
-                values($1, $2, $3, $4, $5, $6) returning id
-            `, [roomId, name, email, generateToken, 'Active', userId])
+                INSERT INTO vote_master_room_participants(room__id, name, email, token, status, status_vote, created_by)
+                values($1, $2, $3, $4, $5, $7, $6) returning id
+            `, [roomId, name, email, generateToken, 'Active', 'No', userId])
 
             if(insert){
                 response.status(200).json({
@@ -66,9 +67,9 @@ async function insertParticipants(request, response){
                 })
             }else{
                 const insert = await db.query(`
-                    UPDATE vote_master_room_participants set room__id = $1, name = $2, email = $3, status = $4, modified_by = $5
+                    UPDATE vote_master_room_participants set room__id = $1, name = $2, email = $3, status = $4, modified_by = $5, status_vote = $7
                     where id = $6
-                `, [roomId, name, email, status, userId, id])
+                `, [roomId, name, email, status, userId, id, statusVote])
                 if(insert){
                     response.status(200).json({
                         status: 'success',

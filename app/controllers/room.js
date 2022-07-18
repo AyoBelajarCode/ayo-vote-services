@@ -39,6 +39,47 @@ async function getRoom(request, response){
     
 }
 
+async function getRoomDetail(request, response){
+    const { id } = request.params
+
+    try{
+        const getRoomDetail = await db.query(`
+            SELECT fn_convert_integer(id) as id,
+                name,
+                description,
+                to_char(period_start, 'yyyy-mm-dd') as "dateStart",
+                to_char(period_end, 'yyyy-mm-dd') as "dateEnd",
+                to_char(period_start, 'HH24:mi:ss') as "timeStart",
+                to_char(period_end, 'HH24:mi:ss') as "timeEnd",
+                status,
+                created_date as "createdDate",
+                coalesce(created_by, 'SYSTEM') as "createdBy"
+                from vote_master_room
+                where id = $1
+        `, [id])
+    
+        if(getRoomDetail.rowCount > 0){
+            response.status(200).json({
+                status: 'success',
+                message: 'success',
+                data: getRoomDetail.rows[0]
+            })
+        }else{
+            response.status(200).json({
+                status: 'error',
+                message: 'Sorry, there is no data yet.',
+                data: null
+            })
+        }
+    }catch(err){
+        response.status(500).json({
+            status: 'error',
+            message: 'Oops..there is unknown error',
+            errorThrown: err.stack
+        })
+    }
+}
+
 async function insertRoom(request, response){
     const { id, organizationId, userId, name, dateStart, dateEnd, timeStart, timeEnd, description } = request.body
 
@@ -112,7 +153,7 @@ async function deleteRoom(request, response){
 
             if(deleteData){
                 response.status(200).json({
-                    status: 'error',
+                    status: 'success',
                     message: 'Successfully delete the data!'
                 })
             }
@@ -138,6 +179,7 @@ async function checkId(id){
 
 module.exports = {
     getRoom,
+    getRoomDetail,
     insertRoom,
     deleteRoom
 }
