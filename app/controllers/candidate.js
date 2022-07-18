@@ -37,10 +37,10 @@ async function getCandidate(request, response){
 }
 
 async function insertCandidate(request, response){
-    const { userId, id, roomId, name, positionId, vision, mission } = request.body
+    const { userId, id, roomId, name, positionId, vision, missions } = request.body
 
     try{
-        const newMission = mission.join(', ')
+        const newMission = missions.join(', ')
         const arrayMission = `{${newMission}}`
 
         if(id === null || id === ""){
@@ -105,7 +105,7 @@ async function deleteCandidate(request, response){
 
             if(deleteData){
                 response.status(200).json({
-                    status: 'error',
+                    status: 'success',
                     message: 'Successfully delete the data!'
                 })
             }

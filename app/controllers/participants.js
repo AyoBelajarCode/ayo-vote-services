@@ -106,7 +106,7 @@ async function deleteParticipants(request, response){
 
             if(deleteData){
                 response.status(200).json({
-                    status: 'error',
+                    status: 'success',
                     message: 'Successfully delete the data!'
                 })
             }
