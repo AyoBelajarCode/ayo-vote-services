@@ -39,6 +39,9 @@ router.get('/voting/checktoken/:token', voting.checkToken)
 router.get('/voting/position/:roomId', voting.getPosition)
 router.get('/voting/:roomId/:positionId', voting.getCandidate)
 router.post('/voting', voting.saveVoting)
+router.post('/voting/save', voting.saveAll)
+
+router.get('/result/:token', voting.getCandidateResult)
 
 router.post('/option', option.getCombo)
 

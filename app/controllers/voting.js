@@ -127,15 +127,134 @@ async function saveVoting(request, response){
         
         if(checkAccess.rowCount > 0){
             if(checkAccess.rows[0].status.toLowerCase() === 'active'){
-                const insertVote = await db.query(`INSERT INTO vote_master_room_participants_voting
-                                                    (room__id, participants__id, candidate__id)
-                                                    values
-                                                    ($1, $2, $3)`, [roomId, checkAccess.rows[0].id, candidateId])
+                const checkVote = await db.query(`SELECT id from vote_master_room_participants_voting
+                                                    where participants__id = $1 and room__id = $2`, [checkAccess.rows[0].id, roomId])
 
-                if(insertVote){
+                if(checkVote.rowCount > 0){
+                    const updateVote = await db.query(`update vote_master_room_participants_voting
+                                                        set candidate__id = $1
+                                                        where id = $2
+                                                        `, [candidateId, checkVote.rows[0].id])
+    
+                    if(updateVote){
+                        response.status(200).json({
+                            status: 'success',
+                            message: `Thank you for your vote!`
+                        })
+                    }
+                }else{
+                    const insertVote = await db.query(`INSERT INTO vote_master_room_participants_voting
+                                                        (room__id, participants__id, candidate__id)
+                                                        values
+                                                        ($1, $2, $3)`, [roomId, checkAccess.rows[0].id, candidateId])
+    
+                    if(insertVote){
+                        response.status(200).json({
+                            status: 'success',
+                            message: `Thank you for your vote!`
+                        })
+                    }
+                }
+
+            }else{
+                response.status(200).json({
+                    status: 'error',
+                    message: `Token already used!`,
+                    data: null
+                })
+            }
+        }else{
+            response.status(200).json({
+                status: 'error',
+                message: `Token doesn't exists`,
+                data: null
+            })
+        }
+    }catch(err){
+        response.status(500).json({
+            status: 'error',
+            message: 'Oops..there is unknown error',
+            errorThrown: err.stack
+        })
+    }
+}
+
+async function saveAll(request, response){
+    const { token } = request.body
+
+    try{
+        const checkAccess = await db.query(`SELECT
+                                                id,
+                                                status
+                                                from vote_master_room_participants
+                                                where token = $1`, [token])
+        
+        if(checkAccess.rowCount > 0){
+            if(checkAccess.rows[0].status.toLowerCase() === 'active'){
+                const updateVote = await db.query(`update vote_master_room_participants set status = 'Inactive', status_vote = 'Yes' where id = $1`, [checkAccess.rows[0].id])
+
+                if(updateVote){
                     response.status(200).json({
                         status: 'success',
-                        message: `Thank you for your vote!`
+                        message: `Thank you for your vote, see you next time!`
+                    })
+                }
+            }else{
+                response.status(200).json({
+                    status: 'error',
+                    message: `Token already used!`,
+                    data: null
+                })
+            }
+        }else{
+            response.status(200).json({
+                status: 'error',
+                message: `Token doesn't exists`,
+                data: null
+            })
+        }
+    }catch(err){
+        response.status(500).json({
+            status: 'error',
+            message: 'Oops..there is unknown error',
+            errorThrown: err.stack
+        })
+    }
+}
+
+async function getCandidateResult(request, response){
+    const { token } = request.params
+
+    try{
+        const checkAccess = await db.query(`SELECT
+                                                id,
+                                                status
+                                                from vote_master_room_participants
+                                                where token = $1`, [token])
+        
+        if(checkAccess.rowCount > 0){
+            if(checkAccess.rows[0].status.toLowerCase() === 'active'){
+                const updateVote = await db.query(`select a.id,
+                                                    b.name as "candidateName",
+                                                    c.name as "positionName"
+                                                    from vote_master_room_participants_voting a
+                                                    left join vote_master_room_participants d on a.participants__id = d.id
+                                                    left join vote_master_room_candidate b on a.candidate__id = b.id
+                                                    left join vote_master_position c on c.id = b.position__id
+                                                    where d.id = $1
+                                                    order by c.id`, [checkAccess.rows[0].id])
+
+                if(updateVote && updateVote.rowCount > 0){
+                    response.status(200).json({
+                        status: 'success',
+                        message: `Success`,
+                        data: updateVote.rows
+                    })
+                }else{
+                    response.status(200).json({
+                        status: 'error',
+                        message: `You haven't vote`,
+                        data: null
                     })
                 }
             }else{
@@ -165,5 +284,7 @@ module.exports = {
     checkToken,
     getPosition,
     getCandidate,
-    saveVoting
+    saveVoting,
+    saveAll,
+    getCandidateResult
 }
