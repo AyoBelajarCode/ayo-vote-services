@@ -1,5 +1,6 @@
 const db = require('../helper/database')
 const { sha256Generator } = require('../helper/encryptor')
+const { sendEmail } = require('../helper/email')
 
 async function getParticipants(request, response){
     const { roomId } = request.params
@@ -48,9 +49,30 @@ async function insertParticipants(request, response){
             const insert = await db.query(`
                 INSERT INTO vote_master_room_participants(room__id, name, email, token, status, status_vote, created_by)
                 values($1, $2, $3, $4, $5, $7, $6) returning id
-            `, [roomId, name, email, generateToken, 'Active', 'No', userId])
+            `, [roomId, name, email, generateToken, 'Active', userId, 'No'])
 
             if(insert){
+                const getParticipantsData = await db.query(`
+                    SELECT
+                        a.name,
+                        b.name as "roomName",
+                        email,
+                        token
+                        from vote_master_room_participants a
+                        left join vote_master_room b on a.room__id = b.id
+                        where a.id = $1
+                `, [insert.rows[0].id])
+
+                const resultParticipants = getParticipantsData.rows[0]
+
+                const data = {
+                    name: resultParticipants.name,
+                    room: resultParticipants.roomName,
+                    email: resultParticipants.email
+                }
+
+                sendEmail(resultParticipants.token, data)
+
                 response.status(200).json({
                     status: 'success',
                     message: 'Succesfully added new data!',

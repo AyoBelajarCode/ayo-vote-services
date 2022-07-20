@@ -17,6 +17,13 @@ router.use(function hitlog(request, response, next){
 
 router.post('/login', auth.checkAuth)
 
+router.get('/voting/checktoken/:token', voting.checkToken)
+router.get('/voting/position/:roomId', voting.getPosition)
+router.get('/voting/:roomId/:positionId', voting.getCandidate)
+router.post('/voting', voting.saveVoting)
+router.post('/voting/save', voting.saveAll)
+router.get('/result/:token', voting.getCandidateResult)
+
 router.use(checkSession)
 
 router.get('/room/:organizationId', room.getRoom)
@@ -34,14 +41,6 @@ router.get('/participants/:roomId', participants.getParticipants)
 router.post('/participants', participants.insertParticipants)
 router.put('/participants', participants.insertParticipants)
 router.delete('/participants/:id', participants.deleteParticipants)
-
-router.get('/voting/checktoken/:token', voting.checkToken)
-router.get('/voting/position/:roomId', voting.getPosition)
-router.get('/voting/:roomId/:positionId', voting.getCandidate)
-router.post('/voting', voting.saveVoting)
-router.post('/voting/save', voting.saveAll)
-
-router.get('/result/:token', voting.getCandidateResult)
 
 router.post('/option', option.getCombo)
 
