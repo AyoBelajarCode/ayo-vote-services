@@ -16,6 +16,7 @@ router.use(function hitlog(request, response, next){
 })
 
 router.post('/login', auth.checkAuth)
+router.post('/logout', auth.logout)
 
 router.get('/voting/checktoken/:token', voting.checkToken)
 router.get('/voting/position/:roomId', voting.getPosition)

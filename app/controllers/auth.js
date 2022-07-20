@@ -61,6 +61,20 @@ async function checkAuth(request, response){
     }
 }
 
+async function logout(request, response){
+    const { sessionId } = request.body
+
+    const insertSession = await db.query(`DELETE FROM vote_user_sessions where session = $1`, [sessionId])
+
+    if(insertSession){
+        response.status(200).json({
+            status: 'success',
+            message: 'Successfully logged in!'
+        })
+    }
+
+}
+
 function checkSecurity(securityCode, email, password, timestamp){
     const apiKey = process.env.API_KEY
     const serverHash = sha256Generator('encrypt', apiKey + email + password + timestamp)
@@ -88,5 +102,6 @@ async function getIpAddress(){
 }
 
 module.exports = {
-    checkAuth
+    checkAuth,
+    logout
 }
