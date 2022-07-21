@@ -11,8 +11,9 @@ async function getRoom(request, response){
                 to_char(period_start, 'yyyy-mm-dd HH24:mi') || ' - ' || to_char(period_end, 'yyyy-mm-dd HH24:mi') as period,
                 status,
                 created_date as "createdDate",
-                coalesce(created_by, 'SYSTEM') as "createdBy"
-                from vote_master_room
+                coalesce(created_by, 'SYSTEM') as "createdBy",
+                (select count(id) from vote_master_room_participants where room__id = a.id) as participants
+                from vote_master_room a
                 where organization__id = $1
         `, [organizationId])
     

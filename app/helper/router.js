@@ -6,6 +6,7 @@ const candidate = require('../controllers/candidate')
 const participants = require('../controllers/participants')
 const voting = require('../controllers/voting')
 const option = require('../controllers/option')
+const dashboard = require('../controllers/dashboard')
 
 const checkSession = require('./sessions')
 const router = express.Router()
@@ -27,6 +28,8 @@ router.get('/result/:token', voting.getCandidateResult)
 
 router.use(checkSession)
 
+router.post('/dashboard/widget', dashboard.dashboardWidget)
+
 router.get('/room/:organizationId', room.getRoom)
 router.get('/roomDetail/:id', room.getRoomDetail)
 router.post('/room', room.insertRoom)
@@ -34,6 +37,7 @@ router.put('/room', room.insertRoom)
 router.delete('/room/:id', room.deleteRoom)
 
 router.get('/candidate/:roomId', candidate.getCandidate)
+router.get('/candidateDetail/:id', candidate.getCandidateDetail)
 router.post('/candidate', candidate.insertCandidate)
 router.put('/candidate', candidate.insertCandidate)
 router.delete('/candidate/:id', candidate.deleteCandidate)

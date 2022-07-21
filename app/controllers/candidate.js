@@ -36,6 +36,44 @@ async function getCandidate(request, response){
     }
 }
 
+async function getCandidateDetail(request, response){
+    const { id } = request.params
+
+    try{
+        const getCandidateList = await db.query(`
+            SELECT fn_convert_integer(id) as id,
+                name,
+                room__id as "roomId",
+                position__id as "positionId",
+                (select name from vote_master_position where id = position__id) as position,
+                vision,
+                array_to_json(mission) as mission
+                from vote_master_room_candidate
+                where id = $1
+        `, [id])
+
+        if(getCandidateList.rowCount > 0){
+            response.status(200).json({
+                status: 'success',
+                message: 'success',
+                data: getCandidateList.rows[0]
+            })
+        }else{
+            response.status(200).json({
+                status: 'error',
+                message: 'Sorry, there is no data yet.',
+                data: null
+            })
+        }
+    }catch(err){
+        response.status(500).json({
+            status: 'error',
+            message: 'Oops..there is unknown error',
+            errorThrown: err.stack
+        })
+    }
+}
+
 async function insertCandidate(request, response){
     const { userId, id, roomId, name, positionId, vision, missions } = request.body
 
@@ -131,6 +169,7 @@ async function checkId(id){
 
 module.exports = {
     getCandidate,
+    getCandidateDetail,
     insertCandidate,
     deleteCandidate
 }
