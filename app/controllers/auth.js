@@ -101,7 +101,20 @@ async function getIpAddress(){
     return results
 }
 
+async function test(request, response){
+    const { action, text } = request.body
+
+    const result = sha256Encryptor(action, text)
+
+    console.log(result)
+
+    response.json({
+        message: result
+    })
+}
+
 module.exports = {
     checkAuth,
-    logout
+    logout,
+    test
 }
