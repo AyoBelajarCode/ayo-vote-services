@@ -1,7 +1,6 @@
 const db = require('../helper/database')
 const { sha256Generator } = require('../helper/encryptor')
 const moment = require('moment')
-const { unix } = require('moment')
 
 async function checkSession(request, response, next){
     const { securitycode, timestamp } = request.headers
@@ -20,7 +19,7 @@ async function checkSession(request, response, next){
             const differentDay = currentDate.diff(lastActivity, 'days')
 
             if(differentDay > 2){
-                await db.query(`DELETE FROM vote_user_sessions where session = $1`, [session])
+                await db.query(`DELETE FROM vote_user_sessions where session = $1`, [sessionId])
                 response.status(408).json({
                     status: 'error',
                     message: 'Session timeout!'

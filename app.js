@@ -8,6 +8,7 @@ const port = process.env.PORT || 4000
 const router = require('./app/helper/router')
 
 const sessions = require('express-session')
+const fileupload = require('express-fileupload')
 const cookieParser = require('cookie-parser')
 
 const cors = require('cors')
@@ -16,6 +17,8 @@ const oneDay = (1000 * 60 * 60 * 24) * 2
 app.use(cors({
     origin: '*'
 }))
+
+app.use(fileupload())
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({
