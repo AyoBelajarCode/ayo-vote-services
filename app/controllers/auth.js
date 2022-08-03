@@ -3,6 +3,45 @@ const { networkInterfaces } = require('os')
 const { sha256Generator, sha256Encryptor } = require('../helper/encryptor')
 const moment = require('moment')
 
+async function register(request, response){
+    const { organizationName, organizationEmail, username, email, password } = request.body
+    const { securitycode, timestamp } = request.headers
+    const check = checkSecurity(securitycode, email, password, timestamp)
+    const encryptedPassword = sha256Generator('encrypt', password)
+
+    if(check){
+        try{
+            const insertOrganization = await db.query(`
+                INSERT INTO vote_master_organization(name, email)
+                VALUES($1, $2) returning id
+            `, [organizationName, organizationEmail])
+            console.log(insertOrganization)
+    
+            if(insertOrganization && insertOrganization.rows[0].id !== ''){
+                const organizationId = insertOrganization.rows[0].id
+    
+                const insertUser = await db.query(`
+                    INSERT INTO vote_user_data(id, organization__id, name, email, password, language__id, is_active)
+                    values(fn_vote_user_id_generate(), $1, $2, $3, $4, $5, $6)
+                `, [organizationId, username, email, encryptedPassword, 2, 1])
+    
+                if(insertUser){
+                    response.status(200).json({
+                        status: 'success',
+                        message: 'Successfully registered user!'
+                    })
+                }
+            }
+        }catch(error){
+            response.status(500).json({
+                status: 'error',
+                message: 'Error when save data to database!',
+                errorThrown: error.stack
+            })
+        }
+    }
+}
+
 async function checkAuth(request, response){
     const { email, password } = request.body
     const { securitycode, timestamp } = request.headers
@@ -115,6 +154,7 @@ async function test(request, response){
 
 module.exports = {
     checkAuth,
+    register,
     logout,
     test
 }
