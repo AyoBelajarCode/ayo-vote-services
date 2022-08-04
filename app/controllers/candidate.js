@@ -75,7 +75,7 @@ async function getCandidateDetail(request, response){
 }
 
 async function insertCandidate(request, response){
-    const { userId, id, roomId, name, positionId, vision, missions } = request.body
+    const { userId, id, roomId, name, positionId, vision, missions, candidatePhoto } = request.body
 
     try{
         const newMission = missions.join(', ')
@@ -83,9 +83,9 @@ async function insertCandidate(request, response){
 
         if(id === null || id === ""){
             const insert = await db.query(`
-                INSERT INTO vote_master_room_candidate(room__id, name, position__id, vision, mission, created_by)
-                values($1, $2, $3, $4, $5, $6) returning id
-            `, [roomId, name, positionId, vision, arrayMission, userId])
+                INSERT INTO vote_master_room_candidate(room__id, name, position__id, vision, mission, created_by, candidate_photo)
+                values($1, $2, $3, $4, $5, $6, $7) returning id
+            `, [roomId, name, positionId, vision, arrayMission, userId, candidatePhoto])
 
             if(insert){
                 response.status(200).json({
@@ -104,9 +104,9 @@ async function insertCandidate(request, response){
                 })
             }else{
                 const insert = await db.query(`
-                    UPDATE vote_master_room_candidate set room__id = $1, name = $2, position__id = $3, vision = $4, mission = $5, modified_by = $7
+                    UPDATE vote_master_room_candidate set room__id = $1, name = $2, position__id = $3, vision = $4, mission = $5, modified_by = $7, candidate_photo = $8
                     where id = $6
-                `, [roomId, name, positionId, vision, arrayMission, id, userId])
+                `, [roomId, name, positionId, vision, arrayMission, id, userId, candidatePhoto])
                 if(insert){
                     response.status(200).json({
                         status: 'success',

@@ -123,6 +123,7 @@ async function getCandidate(request, response) {
                 SELECT fn_convert_integer(id) as id,
                     name,
                     string_agg(substr(initials, 1,1)|| '', '') initials,
+                    candidate_photo as "candidatePhoto",
                     position__id as "positionId",
                     (select name from vote_master_position where position__id = id) as position,
                     vision,
@@ -132,6 +133,7 @@ async function getCandidate(request, response) {
                         select id,
                                 name,
                                 unnest(string_to_array(name, ' ')) initials,
+                                candidate_photo,
                                 position__id,
                             vision,
                             mission
@@ -139,7 +141,7 @@ async function getCandidate(request, response) {
                             where room__id = $1
                             and position__id = $2
                     ) sub
-                    group by sub.id, sub.name, sub.position__id, sub.vision, sub.mission;
+                    group by sub.id, sub.name, sub.position__id, sub.vision, sub.mission, sub.candidate_photo;
                 `, [roomId, positionId])
 
             if (getAllCandidate.rowCount > 0) {
