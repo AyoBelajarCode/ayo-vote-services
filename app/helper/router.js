@@ -31,6 +31,7 @@ router.get('/result/:token', voting.getCandidateResult)
 router.use(checkSession)
 
 router.post('/dashboard/widget', dashboard.dashboardWidget)
+router.get('/dashboard/statistic/:roomId/:positionId', dashboard.getResultCandidate)
 
 router.get('/room/:organizationId', room.getRoom)
 router.get('/roomDetail/:id', room.getRoomDetail)

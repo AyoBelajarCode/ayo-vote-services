@@ -9,7 +9,8 @@ async function getCandidate(request, response){
                 name,
                 (select name from vote_master_position where id = position__id) as position,
                 vision,
-                array_to_json(mission) as mission
+                array_to_json(mission) as mission,
+                candidate_photo as "candidatePhoto"
                 from vote_master_room_candidate
                 where room__id = $1
         `, [roomId])
@@ -47,7 +48,8 @@ async function getCandidateDetail(request, response){
                 position__id as "positionId",
                 (select name from vote_master_position where id = position__id) as position,
                 vision,
-                array_to_json(mission) as mission
+                array_to_json(mission) as mission,
+                candidate_photo as "candidatePhoto"
                 from vote_master_room_candidate
                 where id = $1
         `, [id])

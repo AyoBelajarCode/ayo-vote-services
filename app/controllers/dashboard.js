@@ -65,21 +65,28 @@ async function getUser(organizationId){
     }
 }
 
-async function getResultCandidate(roomId, positionId){
+async function getResultCandidate(request, response){
+    const { roomId, positionId } = request.params
+
     try{
         const query = await db.query(`select b.name, count(a.id)
                                         from vote_master_room_participants_voting a
-                                        left join vote_master_room_candidate b on a.candidate__id = b.id and a.room__id = b.room__id
-                                        where a.room__id = $1
+                                        right join vote_master_room_candidate b on a.candidate__id = b.id and a.room__id = b.room__id
+                                        where b.room__id = $1
                                         and b.position__id = $2
                                         group by b.name`, [roomId, positionId])
 
-        return query.rows
+        response.status(200).json({
+            status: 'success',
+            message: 'status',
+            data: query.rows
+        })
     }catch(err){
         return err.stack
     }
 }
 
 module.exports = {
-    dashboardWidget
+    dashboardWidget,
+    getResultCandidate
 }
