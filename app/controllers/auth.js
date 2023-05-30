@@ -70,6 +70,7 @@ async function checkAuth(request, response){
             const userData = {
                 id: dataUser.id,
                 name: dataUser.name,
+                email: dataUser.email,
                 organizationId: dataUser.organizationId,
                 organizationName: dataUser.organizationName,
                 language: dataUser.language
