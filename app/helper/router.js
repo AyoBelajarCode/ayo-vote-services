@@ -13,6 +13,7 @@ const router = express.Router()
 
 router.use(function hitlog(request, response, next){
     console.log('Time: ', Date.now())
+    console.log(request.url)
     next()
 })
 
