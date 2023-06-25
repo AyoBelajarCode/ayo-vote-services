@@ -40,10 +40,11 @@ router.post('/room', room.insertRoom)
 router.put('/room', room.insertRoom)
 router.delete('/room/:id', room.deleteRoom)
 
-router.get('/candidate/:roomId', candidate.getCandidate)
+router.get('/candidate/:roomId/:count?/:page?', candidate.getCandidate)
 router.get('/candidateDetail/:id', candidate.getCandidateDetail)
 router.post('/candidate', candidate.insertCandidate)
 router.put('/candidate', candidate.insertCandidate)
+router.delete(`/candidate`, candidate.deleteCandidateMultiple)
 router.delete('/candidate/:id', candidate.deleteCandidate)
 
 router.get('/participants/:roomId', participants.getParticipants)
