@@ -2,6 +2,7 @@ const db = require('../helper/database')
 const { networkInterfaces } = require('os')
 const { sha256Generator, sha256Encryptor } = require('../helper/encryptor')
 const moment = require('moment')
+const getMenus = require('./menus')
 
 async function register(request, response){
     const { organizationName, organizationEmail, username, email, password } = request.body
@@ -57,6 +58,7 @@ async function checkAuth(request, response){
                                             a.email,
                                             b.id as "organizationId",
                                             b.name as "organizationName",
+                                            c.id as "languageId",
                                             c.name as language
                                             from vote_user_data a
                                             left join vote_master_organization b on a.organization__id = b.id
@@ -67,13 +69,15 @@ async function checkAuth(request, response){
 
         if(checkUser.rowCount > 0){
             const dataUser = checkUser.rows[0]
+            const menus = await getMenus(dataUser.id, dataUser.languageId)
             const userData = {
                 id: dataUser.id,
                 name: dataUser.name,
                 email: dataUser.email,
                 organizationId: dataUser.organizationId,
                 organizationName: dataUser.organizationName,
-                language: dataUser.language
+                language: dataUser.language,
+                menuAccess: menus.data === null ? [] : menus.data
             }
 
             const session = request.session
