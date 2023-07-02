@@ -36,6 +36,7 @@
     "nodemailer-smtp-transport": "^2.7.4",
     "nodemon": "^2.0.16",
     "pg": "^8.7.3",
+    "socket.io": "^4.7.1",
     "xlsx": "^0.18.5"
   }
 }
