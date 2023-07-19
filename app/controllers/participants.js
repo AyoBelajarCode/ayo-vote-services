@@ -5,6 +5,7 @@ const XLSX = require('xlsx')
 const moment = require('moment')
 const path = require('path')
 const excelToJson = require('convert-excel-to-json')
+const fs = require('fs')
 
 async function getParticipants(request, response) {
     const { roomId } = request.params
@@ -119,6 +120,9 @@ async function insertParticipants(request, response) {
 async function insertParticipantsUpload(request, response) {
     const files = request.files.attachment
     const newPath = path.join(__dirname, '../../files/')
+    if(!fs.existsSync(newPath)){
+        fs.mkdirSync(newPath)
+    }
     const { roomId, userId } = request.body
     const filename = `uploaded-file-${moment().format('YYYY-MM-DD')}-room${roomId}.xlsx`
 
@@ -129,86 +133,107 @@ async function insertParticipantsUpload(request, response) {
                 title: 'File not uploaded!',
                 errorThrown: error.stack
             })
+            return
         }
 
-        const workbook = XLSX.readFile(newPath + filename)
-        const sheetList = workbook.SheetNames
+        const client = db.connect()
+        try {
+            (await client).query('BEGIN')
 
-        const excelJson = excelToJson({
-            sourceFile: newPath + filename,
-            header: { rows: 1 },
-            columnToKey: { A: 'name', B: 'email' },
-            sheets: sheetList
-        })
+            const workbook = XLSX.readFile(newPath + filename)
+            const sheetList = workbook.SheetNames
 
-        const resultData = []
-        let successCount = 0, failedCount = 0
+            const excelJson = excelToJson({
+                sourceFile: newPath + filename,
+                header: { rows: 1 },
+                columnToKey: { A: 'name', B: 'email' },
+                sheets: sheetList
+            })
 
-        for (const entry of excelJson.Sheet1) {
-            const secretKey = '4y0v0t3p4rt1c1p4nts'
-            const generateToken = sha256Generator('encrypt', roomId + entry.email + secretKey)
-            const checkEmailExists = await db.query(`SELECT id from vote_master_room_participants where email = $1`, [entry.email])
+            const resultData = []
+            let successCount = 0, failedCount = 0
 
-            if (checkEmailExists.rowCount === 0) {
-                const insert = await db.query(`
-                    INSERT INTO vote_master_room_participants(room__id, name, email, token, status, status_vote, created_by)
-                    values($1, $2, $3, $4, $5, $7, $6) returning id
-                `, [roomId, entry.name, entry.email, generateToken, 'Active', userId, 'No'])
+            for (const entry of excelJson.Sheet1) {
+                const secretKey = '4y0v0t3p4rt1c1p4nts'
+                const generateToken = sha256Generator('encrypt', roomId + entry.email + secretKey)
+                const checkEmailExists = await db.query(`SELECT id from vote_master_room_participants where email = $1`, [entry.email])
 
-                if (insert) {
-                    const getParticipantsData = await db.query(`
-                        SELECT
-                            a.name,
-                            b.name as "roomName",
-                            email,
-                            token
-                            from vote_master_room_participants a
-                            left join vote_master_room b on a.room__id = b.id
-                            where a.id = $1
-                    `, [insert.rows[0].id])
+                if (checkEmailExists.rowCount === 0) {
+                    const insert = await (await client).query(`
+                            INSERT INTO vote_master_room_participants(room__id, name, email, token, status, status_vote, created_by)
+                            values($1, $2, $3, $4, $5, $7, $6) returning id
+                        `, [roomId, entry.name, entry.email, generateToken, 'Active', userId, 'No'])
 
-                    const resultParticipants = getParticipantsData.rows[0]
+                    if (insert) {
+                        const getParticipantsData = await (await client).query(`
+                                SELECT
+                                    a.name,
+                                    b.name as "roomName",
+                                    email,
+                                    token
+                                    from vote_master_room_participants a
+                                    left join vote_master_room b on a.room__id = b.id
+                                    where a.id = $1
+                            `, [insert.rows[0].id])
 
-                    const data = {
-                        name: resultParticipants.name,
-                        room: resultParticipants.roomName,
-                        email: resultParticipants.email
+                        const resultParticipants = getParticipantsData.rows[0]
+
+                        const data = {
+                            name: resultParticipants.name,
+                            room: resultParticipants.roomName,
+                            email: resultParticipants.email
+                        }
+
+                        sendEmail(resultParticipants.token, data)
+
+                        resultData.push({
+                            status: 'success',
+                            email: resultParticipants.email,
+                            message: 'Sukses'
+                        })
+                        successCount++
+                    } else {
+                        resultData.push({
+                            status: 'error',
+                            email: entry.email,
+                            message: 'Gagal menambahkan participants'
+                        })
+                        failedCount++
                     }
-
-                    sendEmail(resultParticipants.token, data)
-
-                    resultData.push({
-                        status: 'success',
-                        email: resultParticipants.email,
-                        message: 'Sukses'
-                    })
-                    successCount++
                 } else {
                     resultData.push({
                         status: 'error',
                         email: entry.email,
-                        message: 'Gagal menambahkan participants'
+                        message: 'Email sudah terdaftar sebagai peserta di ruangan ini'
                     })
                     failedCount++
                 }
-            } else {
-                resultData.push({
-                    status: 'error',
-                    email: entry.email,
-                    message: 'Email sudah terdaftar sebagai peserta di ruangan ini'
-                })
-                failedCount++
             }
-        }
 
-        response.status(200).json({
-            status: 'success',
-            message: 'Successfully Upload an Participants',
-            successCount: successCount,
-            failedCount: failedCount,
-            data: resultData
-        })
+            (await client).query('COMMIT')
+
+            response.status(200).json({
+                status: 'success',
+                message: 'Successfully Upload an Participants',
+                successCount: successCount,
+                failedCount: failedCount,
+                data: resultData
+            })
+        } catch (err) {
+            (await client).query('ROLLBACK')
+            response.status(500).json({
+                status: 'error',
+                message: 'Ada kesalahan pada template',
+                successCount: null,
+                failedCount: null,
+                data: null,
+                errorThrown: err.stack
+            })
+        } finally {
+            (await client).release()
+        }
     })
+
 }
 
 async function deleteParticipants(request, response) {
