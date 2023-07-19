@@ -1,12 +1,28 @@
 const db = require('../helper/database')
 
 async function getCandidate(request, response) {
-    const { roomId, count, page } = request.params
+    const { roomId } = request.params
+    const { page, orderBy, order, size, search } = request.query
 
     try {
+        let pagination = null, orderQuery = null, searchQuery = null
+
+        if(page !== undefined && size !== undefined){
+            const index = page - 1
+            pagination = `LIMIT ${size} OFFSET ${index} * ${size}`
+        }
+
+        if(orderBy !== undefined && order !== undefined){
+            orderQuery = `ORDER BY ${orderBy} ${order}`
+        }
+
+        if(search !== undefined){
+            searchQuery = `and name ilike '%${search}%'`
+        }
+
         const getCandidateList = await db.query(`
             SELECT fn_convert_integer(id) as id,
-                name,
+                name,   
                 room__id as "roomId",
                 position__id as "positionId",
                 (select name from vote_master_position where id = position__id) as position,
@@ -15,24 +31,33 @@ async function getCandidate(request, response) {
                     array_to_string(mission, E'\n') as mission,
                 */
                 array_to_json(mission) as mission,
-                candidate_photo as "candidatePhoto"
+                candidate_photo as "candidatePhoto",
+                COUNT(*) OVER() AS total_rows
                 from vote_master_room_candidate
                 where room__id = $1
-                ${count !== undefined && page !== undefined ? `LIMIT ${count} OFFSET ${page} & ${count}` : ''}
+                ${searchQuery ?? ''}
+                ${pagination ?? ''}
+                ${orderQuery ?? ''}
         `, [roomId])
 
 
         if (getCandidateList.rowCount > 0) {
+            const data = getCandidateList.rows.map(({ total_rows, ...rest }) => rest)
+
             response.status(200).json({
                 status: 'success',
                 message: 'success',
-                data: getCandidateList.rows
+                data: data,
+                totalRows: parseInt(getCandidateList.rows[0].total_rows),
+                rowPerPage: parseInt(size)
             })
         } else {
             response.status(200).json({
                 status: 'error',
                 message: 'Sorry, there is no data yet.',
-                data: null
+                data: null,
+                totalRows: null,
+                rowPerPage: parseInt(size)
             })
         }
     } catch (err) {
