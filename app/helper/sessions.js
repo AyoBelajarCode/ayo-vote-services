@@ -7,7 +7,7 @@ async function checkSession(request, response, next){
     const sessionId = (request.method === 'GET' || request.method === 'DELETE') ? request.headers.session : request.body.sessionId
     const apiKey = process.env.API_KEY
 
-    const serverHash = sha256Generator('encrypt', apiKey + sessionId + timestamp)
+    const serverHash = sha256Generator(apiKey + sessionId + timestamp)
     
     if(securitycode === serverHash){
         const checkCurrentSession = await db.query(`SELECT * from vote_user_sessions where session = $1`, [sessionId])

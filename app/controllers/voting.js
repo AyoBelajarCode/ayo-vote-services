@@ -3,7 +3,7 @@ const { sha256Generator } = require('../helper/encryptor')
 const dotenv = require('dotenv').config()
 
 function checkSecurity(token, timestamp, securityCode){
-    const serverHash = sha256Generator('encrypt', process.env.API_KEY+token+timestamp)
+    const serverHash = sha256Generator(process.env.API_KEY+token+timestamp)
 
     if(securityCode === serverHash){
         return true

@@ -8,7 +8,7 @@ async function register(request, response){
     const { organizationName, organizationEmail, username, email, password } = request.body
     const { securitycode, timestamp } = request.headers
     const check = checkSecurity(securitycode, email, password, timestamp)
-    const encryptedPassword = sha256Generator('encrypt', password)
+    const encryptedPassword = sha256Generator(password)
 
     if(check){
         try{
@@ -47,7 +47,7 @@ async function checkAuth(request, response){
     const { email, password } = request.body
     const { securitycode, timestamp } = request.headers
     const check = checkSecurity(securitycode, email, password, timestamp)
-    const encryptedPassword = sha256Generator('encrypt', password)
+    const encryptedPassword = sha256Generator(password)
 
     if(check){
         const ipAddress = await getIpAddress()
@@ -121,7 +121,7 @@ async function logout(request, response){
 
 function checkSecurity(securityCode, email, password, timestamp){
     const apiKey = process.env.API_KEY
-    const serverHash = sha256Generator('encrypt', apiKey + email + password + timestamp)
+    const serverHash = sha256Generator(apiKey + email + password + timestamp)
 
     if(securityCode === serverHash){
         return true

@@ -1,49 +1,24 @@
 const crypto = require('crypto')
-const cryptoJS = require('crypto-js')
 
 function sha256Encryptor(action, value) {
-    const Sha256 = cryptoJS.SHA256
-    const Hex = cryptoJS.enc.Hex
-    const Utf8 = cryptoJS.enc.Utf8
-    const Base64 = cryptoJS.enc.Base64
-    const AES = cryptoJS.AES
+    const key = Buffer.from(crypto.createHash('sha256').update('4y0v0t3k3y').digest('hex'), 'hex') // Kunci dengan panjang 32 byte (256 bit)
+    const iv = Buffer.from(crypto.createHash('md5').update('4y0v0t31v').digest('hex'), 'hex')
 
-    const secretKey = '4y0v0t3'
-    const secretIv = '4y0v0t31v'
-
-    const key = Sha256(secretKey).toString(Hex).substr(0, 32)
-    const iv = Sha256(secretIv).toString(Hex).substr(0, 16)
-
-    
-    if(action === 'encrypt'){
-        const output = AES.encrypt(value, Utf8.parse(key), {
-            iv: Utf8.parse(iv)
-        }).toString()
-
-        console.log(output)
-
-        const output2ndB64 = Utf8.parse(output).toString(Base64)
-        return output2ndB64
-    }else{
-        const newValue = Base64.parse(value).toString(Utf8)
-
-        console.log(newValue)
-
-        // kWSaRKPdK+SR9b7eFydcEg==
-        const decrypted = AES.decrypt(value, Utf8.parse(key), {
-            iv: Utf8.parse(iv)
-        }).toString(Utf8)
-
+    if (action === 'encrypt') {
+        let cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+        let encrypted = cipher.update(value, 'utf8', 'hex');
+        encrypted += cipher.final('hex');
+        return encrypted
+    } else {
+        let decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+        let decrypted = decipher.update(value, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
         return decrypted
     }
 }
 
-function sha256Generator(action, value) {
-    // const secretKey = "This is my secret key"
-
-    if (action === 'encrypt') {
-        return crypto.createHash('sha256').update(value).digest('hex')
-    }
+function sha256Generator(value) {
+    return crypto.createHash('sha256').update(value).digest('hex')
 }
 
 module.exports = {

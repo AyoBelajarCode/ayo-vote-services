@@ -50,7 +50,7 @@ async function insertParticipants(request, response) {
     try {
         if (id === null || id === "") {
             const secretKey = '4y0v0t3p4rt1c1p4nts'
-            const generateToken = sha256Generator('encrypt', roomId + email + secretKey)
+            const generateToken = sha256Generator(roomId + email + secretKey)
             const insert = await db.query(`
                 INSERT INTO vote_master_room_participants(room__id, name, email, token, status, status_vote, created_by)
                 values($1, $2, $3, $4, $5, $7, $6) returning id
@@ -155,7 +155,7 @@ async function insertParticipantsUpload(request, response) {
 
             for (const entry of excelJson.Sheet1) {
                 const secretKey = '4y0v0t3p4rt1c1p4nts'
-                const generateToken = sha256Generator('encrypt', roomId + entry.email + secretKey)
+                const generateToken = sha256Generator(roomId + entry.email + secretKey)
                 const checkEmailExists = await db.query(`SELECT id from vote_master_room_participants where email = $1`, [entry.email])
 
                 if (checkEmailExists.rowCount === 0) {
