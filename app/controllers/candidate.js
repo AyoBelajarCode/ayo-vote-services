@@ -59,7 +59,7 @@ async function getCandidate(request, response) {
                 data: null,
                 totalRows: null,
                 rowPerPage: parseInt(size) ?? null,
-                totalPage: Math.ceil(parseInt(getCandidateList.rows[0].total_rows) / parseInt(size)) ?? null
+                totalPage: null
             })
         }
     } catch (err) {
