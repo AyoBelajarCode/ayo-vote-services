@@ -49,7 +49,8 @@ async function getCandidate(request, response) {
                 message: 'success',
                 data: data,
                 totalRows: parseInt(getCandidateList.rows[0].total_rows) ?? null,
-                rowPerPage: parseInt(size) ?? null
+                rowPerPage: parseInt(size) ?? null,
+                totalPage: Math.ceil(parseInt(getCandidateList.rows[0].total_rows) / parseInt(size)) ?? null
             })
         } else {
             response.status(200).json({
@@ -57,7 +58,8 @@ async function getCandidate(request, response) {
                 message: 'Sorry, there is no data yet.',
                 data: null,
                 totalRows: null,
-                rowPerPage: parseInt(size) ?? null
+                rowPerPage: parseInt(size) ?? null,
+                totalPage: Math.ceil(parseInt(getCandidateList.rows[0].total_rows) / parseInt(size)) ?? null
             })
         }
     } catch (err) {
