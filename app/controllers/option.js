@@ -32,15 +32,15 @@ async function comboData(type, parent = null){
     let query
     switch(type){
         case 'room':
-            query = await db.query(`SELECT id as "comboKey", name as "comboName"
+            query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", name as "comboName"
                                             from vote_master_room where organization__id = $1`, [parent])
         break
         case 'position':
-            query = await db.query(`SELECT id as "comboKey", name as "comboName"
+            query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", name as "comboName"
                                             from vote_master_position`);
         break
         case 'organization':
-            query = await db.query(`SELECT id as "comboKey", name as "comboName"
+            query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", name as "comboName"
                                             from vote_master_organization
                                             where id in(select b.organization__id
                                                             from vote_master_organization_user_group_member a
