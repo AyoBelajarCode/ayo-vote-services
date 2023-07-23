@@ -222,7 +222,8 @@ async function deleteCandidateMultiple(request, response) {
             } catch (err) {
                 responseMessage.push({
                     id: candidate,
-                    message: `Oops..unkown error in id ${candidate}`
+                    message: `Oops..unkown error in id ${candidate}`,
+                    errorThrown: err.stack
                 })
                 countFailed++
             }
