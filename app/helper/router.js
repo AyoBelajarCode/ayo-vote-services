@@ -51,6 +51,7 @@ router.delete('/candidate/:id', candidate.deleteCandidate)
 router.get('/participants/:roomId', participants.getParticipants)
 router.post('/participants', participants.insertParticipants)
 router.post('/participants/upload', participants.insertParticipantsUpload)
+router.put('/participants/reset/:participantsId', participants.resetStatusVote)
 router.put('/participants', participants.insertParticipants)
 router.delete('/participants/:id', participants.deleteParticipants)
 

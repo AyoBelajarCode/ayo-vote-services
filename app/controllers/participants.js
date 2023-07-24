@@ -120,7 +120,7 @@ async function insertParticipants(request, response) {
 async function insertParticipantsUpload(request, response) {
     const files = request.files.attachment
     const newPath = path.join(__dirname, '../../files/')
-    if(!fs.existsSync(newPath)){
+    if (!fs.existsSync(newPath)) {
         fs.mkdirSync(newPath)
     }
     const { roomId, userId } = request.body
@@ -276,9 +276,41 @@ async function checkId(id) {
     }
 }
 
+async function resetStatusVote(request, response) {
+    const { participantsId } = request.params
+
+    try {
+        const check = await checkId(participantsId)
+
+        if (!check) {
+            response.status(500).json({
+                status: 'error',
+                message: `Data with id ${id} not found`
+            })
+        } else {
+            const update = await db.query(`UPDATE vote_master_room_participants set status_vote = $1, status = $2 where id = $3`, ['No', 'Active', participantsId])
+
+            if (update) {
+                response.status(200).json({
+                    status: 'success',
+                    message: 'Succesfully update the data!',
+                    dataId: parseInt(participantsId)
+                })
+            }
+        }
+    } catch (err) {
+        response.status(500).json({
+            status: 'error',
+            message: 'Oops..there is unknown error',
+            errorThrown: err.stack
+        })
+    }
+}
+
 module.exports = {
     getParticipants,
     insertParticipants,
     insertParticipantsUpload,
-    deleteParticipants
+    deleteParticipants,
+    resetStatusVote
 }
