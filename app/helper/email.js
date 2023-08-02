@@ -3,53 +3,55 @@ const smtpTransport = require('nodemailer-smtp-transport')
 const handlebars = require('handlebars')
 const fs = require('fs')
 const path = require('path')
+const dotenv = require('dotenv').config()
 
-function readHTML(path, callback){
-    fs.readFile(path, {encoding: 'utf-8'}, function(err, html){
-        if(err){
-            callback(err)
-            throw err
-        }else{
-            callback(null, html)
-        }
-    })
+function readHTML(filePath) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, 'utf8', (err, html) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(html);
+            }
+        });
+    });
 }
 
-function sendEmail(token, data){
+async function sendEmail(token, data) {
     const transporter = nodemailer.createTransport(smtpTransport({
-        service: 'gmail',
+        service: process.env.SMTP_SERVICE,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
         auth: {
-            user: 'ayovoteapps@gmail.com',
-            pass: 'jkvbpzfdgmnkuvrf'
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASSWORD
         }
     }))
 
-    readHTML(path.join(__dirname+'/../template/email.html'), function(err, html){
-        const template = handlebars.compile(html)
+    const html = await readHTML(path.join(__dirname, '/../template/email.html'))
+    const template = handlebars.compile(html)
 
-        const replacements = {
-            name: data.name,
-            room: data.room,
-            token: token
-        }
+    const replacements = {
+        name: data.name,
+        room: data.room,
+        token: token
+    }
 
-        const htmlToSend = template(replacements)
+    const htmlToSend = template(replacements)
 
-        const mailOptions = {
-            to: data.email,
-            subject: 'Halo AyoVote disini ingin memberikan token kamu lho..',
-            html: htmlToSend
-        }
+    const mailOptions = {
+        to: data.email,
+        subject: 'Halo AyoVote, disini ingin memberikan token kamu lho..',
+        html: htmlToSend
+    }
 
-        transporter.sendMail(mailOptions, (err, info) => {
-            if(err){
-                console.log(err)
-                callback(error)
-            }
-            console.log(`Email sent ${info.response}`)
-        })
-    })
-    
+    try {
+        const info = await transporter.sendMail(mailOptions)
+        console.info('Success to send email!')
+    } catch (error) {
+        console.error(error)
+        throw new Error('Failed to send email!')
+    }
 }
 
 module.exports = {
