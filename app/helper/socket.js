@@ -1,15 +1,61 @@
-const express = require('express')
-const http = require('http')
 const { Server } = require('socket.io')
+const db = require('./database')
 
-// const app = express()
-// const server = http.createServer(app)
-// const io = new Server(server)
+let io
+const connectedSockets = new Set();
 
-async function handleSocketConnection(data){
-    // io.on('connection', (socket) => {
-    //     socket.emit('changeData', data)
-    // })
+function initSocket(httpServer) {
+    io = new Server(httpServer, {
+        cors: {
+            origin: '*'
+        }
+    })
+
+    io.on('connect', function (socket) {
+        console.log('Socket connected', socket.id)
+
+        // Tambahkan socket ke daftar
+        connectedSockets.add(socket);
+
+        socket.on('joinRoom', (roomId) => {
+            console.log('masuk joinRoom: ' + roomId)
+            socket.join(roomId)
+            socket.roomId = roomId
+        })
+
+        socket.on('disconnect', () => {
+            console.log('Client disconnected', socket.id);
+
+            // Hapus socket dari daftar ketika klien terputus
+            connectedSockets.delete(socket);
+        });
+    })
 }
 
-module.exports = handleSocketConnection
+async function sendNotification(roomId) {
+    if (io) {
+        const candidateResult = await db.query(`select b.name, count(a.id) as vote, 'test' as masuk
+                        from vote_master_room_participants_voting a
+                        left join vote_master_room_candidate b on a.candidate__id = b.id
+                        where a.room__id = $1
+                        group by b.name, a.candidate__id`, [roomId])
+
+        // io.sockets.sockets.forEach((socket) => {
+        //     console.log(socket.roomId)
+        //     if (socket.roomId === roomId) {
+        //         // Kirim pembaruan hanya jika roomId cocok
+        //         socket.emit('getVote', candidateResult.rows);
+        //     }
+        // });
+        try {
+            io.emit('getVote', candidateResult.rows)
+        } catch (error) {
+            console.error('Error sending message:', error)
+        }
+    }
+}
+
+module.exports = {
+    initSocket,
+    sendNotification
+}

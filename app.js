@@ -1,5 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const http = require('http')
 const app = express()
 
 const dotenv = require('dotenv').config()
@@ -12,7 +13,12 @@ const fileupload = require('express-fileupload')
 const cookieParser = require('cookie-parser')
 
 const cors = require('cors')
+const { initSocket, sendNotification } = require('./app/helper/socket')
+const { Server } = require('socket.io')
 const oneDay = (1000 * 60 * 60 * 24) * 2
+const server = http.createServer(app);
+
+initSocket(server)
 
 app.use(cors({
     origin: '*'
@@ -34,11 +40,16 @@ app.use(sessions({
     resave: false
 }))
 
+app.get('/getVote', function(request, response){
+    sendNotification(6)
+    response.send('sukses')
+})
+
 app.use('/api', router)
 app.all("*", (request, response) => {
     response.send({ message: "Your url was not found, please make sure you have entered an correct url!" })
 })
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log(`App running on port ${port}`)
 })
