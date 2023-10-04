@@ -2,7 +2,7 @@ const { Server } = require('socket.io')
 const db = require('./database')
 
 let io
-const connectedSockets = new Set();
+const users = {}
 
 function initSocket(httpServer) {
     io = new Server(httpServer, {
@@ -14,21 +14,32 @@ function initSocket(httpServer) {
     io.on('connect', function (socket) {
         console.log('Socket connected', socket.id)
 
-        // Tambahkan socket ke daftar
-        connectedSockets.add(socket);
+        socket.on('joinRoom', (roomId, userId) => {
+            console.log(`Socket ${socket.id} joining room: ${roomId}`)
 
-        socket.on('joinRoom', (roomId) => {
-            console.log('masuk joinRoom: ' + roomId)
             socket.join(roomId)
-            socket.roomId = roomId
+            users[socket.id] = roomId
         })
 
-        socket.on('disconnect', () => {
-            console.log('Client disconnected', socket.id);
+        socket.on('sendVote', async (data) => {
+            // fungsi save
+            // Pastikan koneksi socket telah bergabung dengan ruangan
+            if (users[socket.id]) {
+                const roomId = users[socket.id];
 
-            // Hapus socket dari daftar ketika klien terputus
-            connectedSockets.delete(socket);
-        });
+                const candidateResult = await db.query(`select b.name, count(a.id) as vote, 'test' as masuk
+                        from vote_master_room_participants_voting a
+                        left join vote_master_room_candidate b on a.candidate__id = b.id
+                        where a.room__id = $1
+                        group by b.name, a.candidate__id`, [data.roomId])
+
+                io.to(roomId).emit('getVote', candidateResult.rows)
+
+            } else {
+                console.log(`socket.id : ${socket.id} cannot send vote because not joined to any room`)
+            }
+
+        })
     })
 }
 
@@ -48,7 +59,8 @@ async function sendNotification(roomId) {
         //     }
         // });
         try {
-            io.emit('getVote', candidateResult.rows)
+            // io.emit('getVote', candidateResult.rows)
+            io.to(roomId).emit('getVote', candidateResult.rows)
         } catch (error) {
             console.error('Error sending message:', error)
         }

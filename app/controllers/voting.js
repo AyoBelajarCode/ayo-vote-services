@@ -301,6 +301,10 @@ async function saveAll(request, response){
     }
 }
 
+async function saveAllSocket(){
+    
+}
+
 async function getCandidateResult(request, response){
     const { token } = request.params
     const { securitycode, timestamp } = request.headers
