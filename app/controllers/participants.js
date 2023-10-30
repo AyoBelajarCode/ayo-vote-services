@@ -73,7 +73,8 @@ async function insertParticipants(request, response) {
                 const data = {
                     name: resultParticipants.name,
                     room: resultParticipants.roomName,
-                    email: resultParticipants.email
+                    email: resultParticipants.email,
+                    url: process.env.APP_MODE === 'development' ? process.env.WEB_URL_DEV : process.env.WEB_URL
                 }
 
                 sendEmail(resultParticipants.token, data)
