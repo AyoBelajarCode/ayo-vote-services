@@ -34,7 +34,8 @@ async function sendEmail(token, data) {
     const replacements = {
         name: data.name,
         room: data.room,
-        token: token
+        token: token,
+        url: process.env.APP_MODE === 'development' ? process.env.WEB_URL_DEV : process.env.WEB_URL
     }
 
     const htmlToSend = template(replacements)
