@@ -32,6 +32,8 @@ async function getRoom(request, response) {
                 status,
                 created_date as "createdDate",
                 coalesce(created_by, 'SYSTEM') as "createdBy",
+                fn_vote_master_data_get_name(6, 2, type_vote__id) as "typeVote",
+                fn_vote_master_data_get_name(7, 2, type_candidate__id) as "typeCandidate",
                 (select count(id) from vote_master_room_participants where room__id = a.id) as participants,
                 COUNT(*) OVER() as total_rows
                 from vote_master_room a
@@ -86,6 +88,8 @@ async function getRoomDetail(request, response) {
                 to_char(period_end, 'HH24:mi:ss') as "timeEnd",
                 status,
                 created_date as "createdDate",
+                type_vote__id as "typeVote",
+                type_candidate__id as "typeCandidate",
                 coalesce(created_by, 'SYSTEM') as "createdBy"
                 from vote_master_room
                 where id = $1
@@ -114,24 +118,37 @@ async function getRoomDetail(request, response) {
 }
 
 async function insertRoom(request, response) {
-    const { id, organizationId, userId, name, dateStart, dateEnd, timeStart, timeEnd, description } = request.body
+    const { id, organizationId, userId, name, dateStart, dateEnd, timeStart, timeEnd, description, typeRoomId, typeCandidateId } = request.body
 
-    const periodStart = `${dateStart} ${timeStart}`
-    const periodEnd = `${dateEnd} ${timeEnd}`
+    const periodStart = (dateStart !== undefined && timeStart !== undefined) ? `${dateStart} ${timeStart}` : null
+    const periodEnd = (dateEnd !== undefined && timeEnd !== undefined) ? `${dateEnd} ${timeEnd}` : null
+    const insertData = [
+        organizationId ?? null,
+        name ?? null,
+        periodStart,
+        periodEnd,
+        description ?? null,
+        'Active',
+        typeRoomId ?? null,
+        typeCandidateId ?? null,
+        userId
+    ]
 
     try {
         if (id === null || id === "") {
             const insert = await db.query(`INSERT INTO vote_master_room
                 (
                     organization__id, name, period_start, period_end,
-                    description, status, created_by
+                    description, status, type_room__id, type_candidate__id,
+                    created_by
                 )
                 values
                 (
                     $1, $2, $3, $4,
-                    $5, $6, $7
-                ) returning id`, [organizationId, name, periodStart, periodEnd,
-                description, 'Active', userId])
+                    $5, $6, $7, $8,
+                    $9
+                ) returning id`,
+                insertData)
             if (insert) {
                 response.status(200).json({
                     status: 'success',
