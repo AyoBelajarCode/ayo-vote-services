@@ -21,7 +21,7 @@ async function getRoom(request, response) {
         }
 
         const getRoomList = await db.query(`
-            SELECT fn_convert_integer(id) as id,
+            SELECT fn_convert_integer(a.id) as id,
                 name,
                 description,
                 to_char(period_start, 'yyyy-mm-dd HH24:mi') || ' - ' || to_char(period_end, 'yyyy-mm-dd HH24:mi') as period,
@@ -32,9 +32,11 @@ async function getRoom(request, response) {
                 status,
                 created_date as "createdDate",
                 coalesce(created_by, 'SYSTEM') as "createdBy",
-                fn_vote_master_data_get_name(6, 2, type_vote__id) as "typeVote",
+                fn_convert_integer(type_room__id) as "typeRoomId",
+                fn_vote_master_data_get_name(6, 2, type_room__id) as "typeRoom",
+                fn_convert_integer(type_candidate__id) as "typeCandidateId",
                 fn_vote_master_data_get_name(7, 2, type_candidate__id) as "typeCandidate",
-                (select count(id) from vote_master_room_participants where room__id = a.id) as participants,
+                (select count(0) from vote_master_room_participants where room__id = a.id) as participants,
                 COUNT(*) OVER() as total_rows
                 from vote_master_room a
                 where organization__id = $1
@@ -65,6 +67,7 @@ async function getRoom(request, response) {
             })
         }
     } catch (err) {
+        console.log(err)
         response.status(500).json({
             status: 'error',
             message: 'Oops..there is unknown error',
@@ -88,8 +91,8 @@ async function getRoomDetail(request, response) {
                 to_char(period_end, 'HH24:mi:ss') as "timeEnd",
                 status,
                 created_date as "createdDate",
-                type_vote__id as "typeVote",
-                type_candidate__id as "typeCandidate",
+                fn_convert_integer(type_room__id) as "typeRoomId",
+                fn_convert_integer(type_candidate__id) as "typeCandidateId",
                 coalesce(created_by, 'SYSTEM') as "createdBy"
                 from vote_master_room
                 where id = $1
@@ -99,7 +102,7 @@ async function getRoomDetail(request, response) {
             response.status(200).json({
                 status: 'success',
                 message: 'success',
-                data: getRoomDetail.rows[0]
+                data: getRoomDetail.rows.shift()
             })
         } else {
             response.status(200).json({
@@ -165,8 +168,8 @@ async function insertRoom(request, response) {
                     message: `Data with id ${id} not found`
                 })
             } else {
-                const insert = await db.query(`UPDATE vote_master_room set name = $1, period_start = $2, period_end = $3, description = $4, modified_by = $6 where id = $5`,
-                    [name, periodStart, periodEnd, description, id, userId])
+                const insert = await db.query(`UPDATE vote_master_room set name = $1, period_start = $2, period_end = $3, description = $4, type_room__id = $7, type_candidate__id = $8, modified_by = $6 where id = $5`,
+                    [name, periodStart, periodEnd, description, id, userId, typeRoomId ?? null, typeCandidateId ?? null])
                 if (insert) {
                     response.status(200).json({
                         status: 'success',
