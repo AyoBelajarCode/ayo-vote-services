@@ -37,7 +37,7 @@ async function comboData(type, parent = null){
         break
         case 'position':
             query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", name as "comboName"
-                                            from vote_master_position`);
+                                            from vote_master_position where id != 3`);
         break
         case 'organization':
             query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", name as "comboName"
@@ -47,6 +47,12 @@ async function comboData(type, parent = null){
                                                             left join vote_master_organization_user_group b on a.user_group__id = b.id
                                                             where user__id = $1)`, [parent]);
         break
+        case 'typeRoom':
+            query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", fn_vote_master_data_get_name(module_table__id, 2, id) as "comboName" from vote_master_data where module_table__id = 6`)
+            break
+        case 'typeCandidate':
+            query = await db.query(`SELECT fn_convert_integer(id) as "comboKey", fn_vote_master_data_get_name(module_table__id, 2, id) as "comboName" from vote_master_data where module_table__id = 7`)
+            break
     }
 
     return query.rows
