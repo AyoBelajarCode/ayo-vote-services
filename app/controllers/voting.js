@@ -1,6 +1,7 @@
 const db = require('../helper/database')
 const { sha256Generator } = require('../helper/encryptor')
-const dotenv = require('dotenv').config()
+require('dotenv').config()
+const { faker } = require('@faker-js/faker')
 
 function checkSecurity(token, timestamp, securityCode){
     const serverHash = sha256Generator(process.env.API_KEY+token+timestamp)
@@ -21,29 +22,40 @@ async function checkToken(request, response) {
     if(checkAuth){
         try {
             const check = await db.query(`
-                SELECT a.status, room__id, b.status as "statusRoom"
+                SELECT a.status, room__id, b.status as "statusRoom", b.id as "roomId", fn_convert_integer(type_candidate__id) as "typeCandidateId"
                     from vote_master_room_participants a
                     left join vote_master_room b on a.room__id = b.id
                     where token = $1
             `, [token])
     
             if (check.rowCount > 0) {
-                if(check.rows[0].statusRoom.toLowerCase() !== 'active'){
+                const result = check.rows.shift()
+
+                if(result?.roomId === null){
+                    response.status(500).json({
+                        status: 'error',
+                        message: 'Ruangan sudah tidak tersedia!'
+                    })
+                    return
+                }
+
+                if(result?.statusRoom?.toLowerCase() !== 'active'){
                     response.status(500).json({
                         status: 'error',
                         message: 'Periode voting sudah berakhir'
                     })
                 }else{
-                    if (check.rows[0].status.toLowerCase() === 'active') {
+                    if (result?.status?.toLowerCase() === 'active') {
                         response.status(200).json({
                             status: 'success',
                             message: 'Success!',
-                            roomId: check.rows[0].room__id
+                            roomId: result?.room__id,
+                            typeCandidateId: result?.typeCandidateId
                         })
                     } else {
                         response.status(500).json({
                             status: 'error',
-                            message: 'Token already used!'
+                            message: 'Token sudah digunakan!'
                         })
                     }
                 }
@@ -119,12 +131,32 @@ async function getCandidate(request, response) {
 
     if(checkAuth){
         try {
+            // const candidateRaw = []
+            // for(let i = 0; i < 30; i++){
+            //     candidateRaw.push({
+            //         id: faker.number.int(),
+            //         name: faker.person.fullName(),
+            //         initials: faker.person.firstName(),
+            //         // candidatePhoto: null,
+            //         candidatePhoto: faker.image.imageUrl(),
+            //         positionId: faker.number.int(),
+            //         vision: faker.string.alphanumeric({ length: { min: 12, max: 60 } }),
+            //         mission: faker.datatype.array({ min: 1, max: 9 })
+            //     })
+            // }
+
+            // response.status(200).json({
+            //     status: 'success',
+            //     message: 'success',
+            //     data: candidateRaw
+            // })
+            // return
             const getAllCandidate = await db.query(`
                 SELECT fn_convert_integer(id) as id,
                     name,
                     string_agg(substr(initials, 1,1)|| '', '') initials,
                     candidate_photo as "candidatePhoto",
-                    position__id as "positionId",
+                    fn_convert_integer(position__id) as "positionId",
                     (select name from vote_master_position where position__id = id) as position,
                     vision,
                     array_to_json(mission) mission
