@@ -121,7 +121,7 @@ async function insertCandidate(request, response) {
             const insert = await db.query(`
                 INSERT INTO vote_master_room_candidate(room__id, name, position__id, vision, mission, created_by, candidate_photo)
                 values($1, $2, $3, $4, $5, $6, $7) returning id
-            `, [roomId, name, positionId, vision, arrayMission, userId, candidatePhoto])
+            `, [roomId, name, positionId || 3, vision, arrayMission, userId, candidatePhoto])
 
             if (insert) {
                 response.status(200).json({
@@ -142,7 +142,7 @@ async function insertCandidate(request, response) {
                 const insert = await db.query(`
                     UPDATE vote_master_room_candidate set room__id = $1, name = $2, position__id = $3, vision = $4, mission = $5, modified_by = $7, candidate_photo = $8
                     where id = $6
-                `, [roomId, name, positionId, vision, arrayMission, id, userId, candidatePhoto])
+                `, [roomId, name, positionId || 3, vision, arrayMission, id, userId, candidatePhoto])
                 if (insert) {
                     response.status(200).json({
                         status: 'success',
