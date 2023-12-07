@@ -38,6 +38,7 @@ function initSocket(httpServer) {
         const results = await saveAllSocket(data);
 
         const candidateResult = await getCandidateResult(data?.roomId);
+        console.log(candidateResult)
         results.data = candidateResult;
 
         io.to(roomId).emit("getVote", results);

@@ -361,7 +361,7 @@ async function saveAll(request, response) {
 async function saveAllSocket(data) {
   const client = db.connect();
   try {
-    (await client).query("BEGIN");
+    await (await client).query("BEGIN");
 
     const checkAccess = await db.query(
       `SELECT
@@ -396,7 +396,7 @@ async function saveAllSocket(data) {
         );
 
         if (updateVote) {
-          (await client).query("COMMIT");
+          await (await client).query("COMMIT");
           return {
             status: "success",
             message: `Thank you for your vote, see you next time!`,
@@ -404,7 +404,7 @@ async function saveAllSocket(data) {
           };
         }
       } else {
-        (await client).query("ROLLBACK");
+        await (await client).query("ROLLBACK");
         return {
           status: "error",
           message: `Token already used!`,
@@ -412,7 +412,7 @@ async function saveAllSocket(data) {
         };
       }
     } else {
-      (await client).query("ROLLBACK");
+      await (await client).query("ROLLBACK");
       return {
         status: "error",
         message: `Token doesn't exists`,
@@ -420,7 +420,7 @@ async function saveAllSocket(data) {
       };
     }
   } catch (err) {
-    (await client).query("ROLLBACK");
+    await (await client).query("ROLLBACK");
     return {
       status: "error",
       message: "Oops..there is unknown error",
