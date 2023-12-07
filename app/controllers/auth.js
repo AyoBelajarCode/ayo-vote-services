@@ -16,7 +16,6 @@ async function register(request, response){
                 INSERT INTO vote_master_organization(name, email)
                 VALUES($1, $2) returning id
             `, [organizationName, organizationEmail])
-            console.log(insertOrganization)
     
             if(insertOrganization && insertOrganization.rows[0].id !== ''){
                 const organizationId = insertOrganization.rows[0].id
@@ -76,8 +75,7 @@ async function checkAuth(request, response){
                 email: dataUser.email,
                 organizationId: dataUser.organizationId,
                 organizationName: dataUser.organizationName,
-                language: dataUser.language,
-                menuAccess: menus.data === null ? [] : menus.data
+                language: dataUser.language
             }
 
             const session = request.session
@@ -89,7 +87,8 @@ async function checkAuth(request, response){
             response.status(200).json({
                 status: 'success',
                 message: 'Successfully logged in!',
-                session: session
+                session: session,
+                menuAccess: menus.data === null ? [] : menus.data
             })
         }else{
             response.status(500).json({
