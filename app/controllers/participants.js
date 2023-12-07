@@ -290,7 +290,7 @@ async function resetStatusVote(request, response) {
         } else {
             const update = await db.query(`UPDATE vote_master_room_participants set status_vote = $1, status = $2 where id = $3`, ['No', 'Active', participantsId])
 
-            if (update) {
+            if (update && deleted) {
                 response.status(200).json({
                     status: 'success',
                     message: 'Succesfully update the data!',
