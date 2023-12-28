@@ -2,6 +2,7 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const http = require('http')
 const app = express()
+const path = require('path');
 
 const dotenv = require('dotenv').config()
 
@@ -40,11 +41,7 @@ app.use(sessions({
     resave: false
 }))
 
-app.get('/getVote', function(request, response){
-    sendNotification(6)
-    response.send('sukses')
-})
-
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', router)
 app.all("*", (request, response) => {
     response.send({ message: "Your url was not found, please make sure you have entered an correct url!" })
