@@ -36,7 +36,7 @@ async function getRoom(request, response) {
                 fn_vote_master_data_get_name(6, 2, type_room__id) as "typeRoom",
                 fn_convert_integer(type_candidate__id) as "typeCandidateId",
                 fn_vote_master_data_get_name(7, 2, type_candidate__id) as "typeCandidate",
-                (select count(0) from vote_master_room_participants where room__id = a.id) as participants,
+                fn_convert_integer((select count(0) from vote_master_room_participants where room__id = a.id)) as participants,
                 COUNT(*) OVER() as total_rows
                 from vote_master_room a
                 where organization__id = $1
